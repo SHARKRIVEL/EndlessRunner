@@ -21,6 +21,7 @@ public class Path : MonoBehaviour
     int normalTileCount = 0;
     int checkPointInsVal = 15;
     int Level = 0;
+    int startingTiles = 2;
 
     List<GameObject> pathFloors = new List<GameObject>();
 
@@ -39,6 +40,11 @@ public class Path : MonoBehaviour
         Vector3 instantiationPos = new Vector3(transform.position.x,transform.position.y,InsPos);
         GameObject nextTile = NextTileMethod();
         pathObjectRef = Instantiate(nextTile,instantiationPos,Quaternion.identity,pathParent);
+        if(startingTiles > 0)
+        {
+            pathObjectRef.GetComponent<Collisions>().enabled = false;
+            startingTiles--;
+        }
         pathFloors.Add(pathObjectRef);
         LevelReturner();
         normalTileCount++;   

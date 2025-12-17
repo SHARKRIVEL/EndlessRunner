@@ -13,7 +13,7 @@ public class Button : MonoBehaviour
 
     public void OnButtonClick()
     {
-       playerCollision.ButtonPressedRef();
+       playerCollision.OnPowerPressed();
     }
 
     public void OnRestartButton()

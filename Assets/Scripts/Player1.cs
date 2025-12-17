@@ -4,18 +4,14 @@ using System.Collections;
 
 public class Player1 : MonoBehaviour
 {
-    Button button;
-    [SerializeField] GameObject ColliderObject;
+    [SerializeField] Button button;
     [SerializeField] Animator animator;
     [SerializeField] float speedFac = 6f,xClampVal,zClampVal;
     Vector2 movePos;
     Rigidbody rb;
-    bool rotated = false;
-    string sliding = "Slide";
+    string sliding = "slide";
     bool slide = false;
-    float CoolDownTime = 1.8f;
-    float CoolDownTimeInc = 0;
-    float lerpInc = 0f;
+    bool slideTriggered = false;
 
     void Start()
     {
@@ -25,8 +21,6 @@ public class Player1 : MonoBehaviour
 
     void FixedUpdate()
     {
-        CoolDownTimeInc += Time.fixedDeltaTime;
-
         float speed = speedFac * Time.fixedDeltaTime;
         
         Vector3 startPos = rb.position;
@@ -40,31 +34,29 @@ public class Player1 : MonoBehaviour
         Vector3 finalPos = new Vector3(XClampValue,this.transform.position.y,ZClampValue);
         rb.MovePosition(finalPos);
 
-        if(slide && CoolDownTimeInc > CoolDownTime)
+        if(slide && !slideTriggered)
         {
-            animator.SetTrigger(sliding);
-            StartCoroutine(RotationMethod());  
-            CoolDownTimeInc = 0;
-        }
-        if(rotated)
-        {
-            ColliderObject.transform.localScale = new Vector3(1f,1f,1f);
-            rotated = false;
+            if(animator.GetBool("gotHit")) return;
+            slideTriggered = true;
+            animator.SetBool(sliding,true);
+            StartCoroutine(WaitTime());  
         }
     }
 
-    IEnumerator RotationMethod()
+    IEnumerator WaitTime()
     {
-        while(lerpInc < 1f)
-        {
-            lerpInc += Time.deltaTime;
-            float lerpValue = Mathf.Lerp(1f,0.3f,lerpInc*2f);
-            ColliderObject.transform.localScale = new Vector3(1f,lerpValue,1f);
-            yield return null;
-            Debug.Log(lerpValue);
-        }
-        lerpInc = 0;  
-        rotated = true;
+        yield return new WaitForSeconds(1f);
+        slideTriggered = false;  
+    }
+
+    public void ResetSlideAnimations()
+    {
+        animator.SetBool(sliding,false);
+    }
+
+    public void ResetHitAnimations()
+    {
+        animator.SetBool("gotHit",false);
     }
 
     public void Move(InputAction.CallbackContext context)

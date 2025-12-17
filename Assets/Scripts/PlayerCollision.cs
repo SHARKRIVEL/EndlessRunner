@@ -10,8 +10,8 @@ public class PlayerCollision : MonoBehaviour
     float speedIncForEveryChecPoint = 1f;
     float loopIncrementor = 0;
     int Score = 0,ScoreInc = 100;
-    int AppleCount;
-    int k,i =0,j=0;
+    int AppleCountForPower = 0;
+    int activeHealthIndex = 0,appleCountForHealth = 0;
 
     bool healthInc = false;
     bool collisionAvoidPower = false;
@@ -43,16 +43,7 @@ public class PlayerCollision : MonoBehaviour
         path = FindFirstObjectByType<Path>();
         ScoreText.text = "SCORE :" + Score;
         audioSource = GetComponent<AudioSource>();
-        buttonText.text = "Collect 20 Apples to Activate";
-    }
-
-    void Update()
-    {
-        CoolDownTime += Time.deltaTime;
-        if(AppleCount > 20)
-        {
-            buttonText.text = "Activated";
-        }
+        buttonText.text = "20 Apples to Activate";
     }
 
     void OnTriggerEnter(Collider other)
@@ -69,8 +60,12 @@ public class PlayerCollision : MonoBehaviour
             audioSource.PlayOneShot(appleAudioClip);
             if(!collisionAvoidPower)
             {
-                AppleCount++;
-                buttonText.text = "Apples : " + AppleCount.ToString();
+                AppleCountForPower++;
+                buttonText.text = "Apples : " + AppleCountForPower.ToString();
+                if(AppleCountForPower > 20)
+                {
+                    buttonText.text = "Activated";
+                }
             }
             Destroy(other.gameObject);
             HealthCheckMethod();
@@ -91,35 +86,28 @@ public class PlayerCollision : MonoBehaviour
 
     void HealthCheckMethod()
     {
-        if(healthInc)
+        if(HealthIndicator[0].activeSelf) return;
+
+        appleCountForHealth++;
+        if(appleCountForHealth == HealthIndicator.Length)
         {
-            j++;
-            if(j>2 && i > 0)
-            {
-                HealthIndicator[k].SetActive(true);
-                k--;
-                i--;
-                j = 0;
-                if(i == 0)
-                {
-                    healthInc = false;
-                }
-            }
+            activeHealthIndex--;
+            HealthIndicator[activeHealthIndex].SetActive(true);
+            appleCountForHealth = 0;
         }
     }
 
     void PlayerCollisionDitection()
     {
+        if(!gameObject.activeSelf) return;
+        
         audioSource.PlayOneShot(obstacleAudioClip);
 
-        if(CoolDownTime < CollisionCoolTime) return;
-        if(i <= 2)
+        if(activeHealthIndex < HealthIndicator.Length)
         {
-            HealthIndicator[i].SetActive(false);
-            healthInc = true;
-            k = i;
+            HealthIndicator[activeHealthIndex].SetActive(false);
 
-            if(i == 2)
+            if(activeHealthIndex == HealthIndicator.Length-1)
             {
                 float speedRef = path.speedReturn();
                 path.SpeedModifier(-speedRef);
@@ -128,17 +116,17 @@ public class PlayerCollision : MonoBehaviour
                 obstacleGB.SetActive(false);
                 Destroy(gameObject);
             }
-            i++;
+            activeHealthIndex++;
         }
-        animator.SetTrigger(AnimTrigger);
-        CoolDownTime = 0;
+        if(animator.GetBool("slide")) return;
+        animator.SetBool("gotHit",true);
     }
 
-    public void ButtonPressedRef()
+    public void OnPowerPressed()
     {
-        if(AppleCount > 20 )
+        if(AppleCountForPower > 20 )
         {
-            AppleCount = 0;
+            AppleCountForPower = 0;
             collisionAvoidPower = true;
             StartCoroutine(CollisionActivation());
         }
@@ -150,7 +138,7 @@ public class PlayerCollision : MonoBehaviour
         while(loopIncrementor < loopTimeOut)
         {
             loopIncrementor += Time.deltaTime;
-            buttonText.text = "Time : " + loopIncrementor.ToString();
+            buttonText.text = "Time : " + loopIncrementor.ToString("F1");
             yield return null;
         }
         loopIncrementor = 0f;
